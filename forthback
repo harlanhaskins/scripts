@@ -1,0 +1,87 @@
+#!/usr/bin/env python
+"""
+forthback.py
+"""
+
+import os
+import sys
+import random
+import argparse
+from time import sleep
+
+class Forthback:
+
+    phrase_dict = {
+            "ios" : "hey siri",
+            "google" : "okay google",
+            "google_alt" : "okay jarvis",
+            "google_now" : "okay google now",
+            "google_glass" : "okay glass",
+            "samsung" : "hi galaxy"
+    }
+
+    def __init__(self, kind):
+        self.activation_phrase = Forthback.phrase_dict[kind]
+        self.phrases = Forthback.phrases_for_kind(kind)
+
+    def speak(self):
+        os.system("say '" + self.activation_phrase + "'")
+        sleep(2)
+        os.system('say "' + random.choice(self.phrases) + '"')
+
+    @classmethod
+    def phrases_for_kind(cls, kind):
+        phrases = [
+            "What movies are playing?",
+            "What's the weather like today?",
+            "Who is injured on the Yankee's?"
+        ]
+        if kind == 'ios':
+            phrases += [
+                "Tell me a joke",
+                "What is the meaning of life?",
+                "When is the world going to end?",
+                "What does the fox say?",
+                "Tell me a story",
+                "Who is taller: " + ("Lebron James,"*10) + "or Lebron James?",
+                "Call me Big Papa",
+                "Do you love me?",
+                "I feel sad.",
+                "Play The Arctic Monkeys"
+            ]
+        elif kind == 'samsung':
+            phrases += [
+                "Why do you suck so badly?"
+            ]
+        return phrases
+
+    @classmethod
+    def kinds(cls):
+        return cls.phrase_dict.keys()
+
+    def run(self, forever=False):
+        while True:
+            if not forever:  # Hack because Python does not have do-while loops.
+                self.speak()
+                break
+            sleep_time = random.randint(1, 10)
+            print("Will run in {minutes} minute{s}."
+                  .format(minutes=sleep_time, s=("" if sleep_time == 1 else "s")))
+            sleep(sleep_time * 60)
+            self.speak()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("type",
+                        help="Specify the kind of device you're interacting with.",
+                        choices=Forthback.kinds())
+    parser.add_argument("-f", "--forever",
+                        help="Specifies whether or not this app should run once or forever.",
+                        action="store_true")
+    args = parser.parse_args()
+    forthback = Forthback(args.type)
+    try:
+        forthback.run(forever=args.forever)
+    except KeyboardInterrupt:
+        print("Exiting.")
+        sys.exit(0)

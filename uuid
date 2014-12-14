@@ -1,0 +1,4 @@
+#!/usr/bin/env swift
+import Foundation.NSUUID
+
+println(NSUUID().UUIDString)

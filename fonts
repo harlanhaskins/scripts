@@ -1,0 +1,6 @@
+#!/usr/bin/env swift
+import Cocoa
+
+let fonts = NSFontManager.sharedFontManager().availableFontFamilies as [String]
+let fontString = "\n".join(fonts)
+println(fontString)

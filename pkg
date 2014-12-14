@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+sudo /usr/sbin/installer -pkg "$1" -target /

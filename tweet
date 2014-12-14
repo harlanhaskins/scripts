@@ -1,0 +1,76 @@
+#!/usr/bin/env python
+import twitter
+import os
+import json
+import textwrap
+import argparse
+
+CREDENTIALS_FILE = os.getenv("HOME", "~") + "/.twittercredentials"
+
+def oauth_credentials():
+    try:
+        with open(CREDENTIALS_FILE) as credentials:
+            return json.load(credentials)
+    except IOError:
+        return create_credentials_file()
+
+def authenticate():
+    credentials = oauth_credentials()
+
+    consumer_key = credentials["consumer_key"]
+    consumer_secret = credentials["consumer_secret"]
+    access_key = credentials["access_key"]
+    access_secret = credentials["access_secret"]
+
+    auth = twitter.OAuth(access_key, access_secret,
+                         consumer_key, consumer_secret)
+
+    return twitter.Twitter(auth=auth)
+
+def create_credentials_file():
+    creds = {
+        "consumer_key": raw_input("Consumer Key: "),
+        "consumer_secret": raw_input("Consumer Secret: "),
+        "access_key": raw_input("Access Key: "),
+        "access_secret": raw_input("Access Secret: ")
+    }
+
+    with open(CREDENTIALS_FILE, 'w') as credentials:
+        json.dump(creds, credentials)
+
+    return creds
+
+def send_tweet(tweet, client):
+    response = client.statuses.update(status=tweet)
+    return response.get("text", None) == tweet
+
+def tweet_list(tweets, client):
+    for tweet in tweets:
+        result =  send_tweet(tweet, client)
+        if result:
+            print("Successfully tweeted " +
+                  "\"{tweet}\"".format(tweet=tweet))
+        else:
+            print("Failure. Check your keys.")
+            exit(1)
+
+def arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('tweet', nargs='?')
+    parser.add_argument('-r', '--reverse', action="store_true",
+                        help="Reverses the order of the tweets so they " +
+                        "can be read top down.")
+    return parser.parse_args()
+
+def tweets_from_arguments():
+    args = arguments()
+    tweet = args.tweet or raw_input()
+    sub_tweets = textwrap.wrap(tweet, 140)
+    if args.reverse:
+        sub_tweets = [i for i in reversed(sub_tweets)]
+    return sub_tweets
+
+if __name__ == "__main__":
+    twitter_client = authenticate()
+    tweets = tweets_from_arguments()
+    tweet_list(tweets, twitter_client)

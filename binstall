@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+if [[ ! -f $1 ]]; then
+    echo "Could not find file $1"
+    exit
+fi
+
+declare -A EXTENSIONS
+EXTENSIONS["sh"]="bash"
+EXTENSIONS["fish"]="fish"
+EXTENSIONS["zsh"]="zsh"
+EXTENSIONS["swift"]="swift"
+EXTENSIONS["hs"]="runhaskell"
+EXTENSIONS["py"]="python"
+EXTENSIONS["pl"]="perl"
+EXTENSIONS["rb"]="ruby"
+EXTENSIONS["php"]="php"
+EXTENSIONS["webloc"]="open"
+EXTENSIONS["applescript"]="osascript"
+
+SCRIPTPATH="${BINSTALL_DIR:-$HOME/bin}"
+EXTENSION="${1##*.}"
+NEW_NAME="${1%.*}"
+NEW_FILE_PATH="$SCRIPTPATH/$NEW_NAME"
+PROGRAM_TO_CALL=${EXTENSIONS[$EXTENSION]}
+
+if [[ ! -d $SCRIPTPATH ]]; then
+    echo "Creating new bin directory at $SCRIPTPATH"
+    if mkdir -p "$SCRIPTPATH"; then
+        echo "Successfully created. Remember to add $SCRIPTPATH to your PATH!"
+    else
+        echo "Failed to create $SCRIPTPATH."
+        exit
+    fi
+fi
+
+if [[ -f $NEW_FILE_PATH ]]; then
+    printf "File exists. Would you like to overwrite it? (Y/n) "
+    read ANSWER
+    if [[ $ANSWER != "n" && $ANSWER != "N" ]]; then
+        rm "$NEW_FILE_PATH"
+        echo "Deleting old file."
+    else
+        exit
+    fi
+fi
+
+read -r FIRST_LINE < "$1"
+SHEBANG_REGEX='^#!.+$'
+if [[ ! $FIRST_LINE =~ $SHEBANG_REGEX  ]]; then
+    if [[ $PROGRAM_TO_CALL == "" ]]; then
+        printf "Warning: Cannot create shebang for unknown file type %s. What should be used to execute this script? " "$EXTENSION"
+        read PROGRAM_TO_CALL
+    fi
+    echo '#!/usr/bin/env' "$PROGRAM_TO_CALL" >> "$NEW_FILE_PATH"
+    echo "Adding shebang to $PROGRAM_TO_CALL file."
+fi
+
+cat "$1" >> "$NEW_FILE_PATH"
+chmod +x "$NEW_FILE_PATH"
+
+echo "Successfully installed $NEW_NAME to $NEW_FILE_PATH"
+
